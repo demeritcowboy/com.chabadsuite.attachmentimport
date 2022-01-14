@@ -26,7 +26,7 @@ class Import extends \Civi\Api4\Generic\AbstractAction {
    * @param Result $result
    */
   public function _run(Result $result) {
-    $this->attachmentsfolder = rtrim('/\\', $this->attachmentsfolder) . '/';
+    $this->attachmentsfolder = rtrim($this->attachmentsfolder, "/\\") . '/';
     $fp = fopen($this->importfile, 'r');
     $header = fgetcsv($fp);
     // for now assume header looks like Attachment ID,Body,Created Date,File Name,Parent ID,Parent.ID
