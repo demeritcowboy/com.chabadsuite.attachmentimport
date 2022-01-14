@@ -1,11 +1,22 @@
 # com.chabadsuite.attachmentimport
 
+Import attachments into a multivalued custom field for Contacts.
+
 The extension is licensed under [AGPL-3.0](LICENSE.txt).
+
+## Getting Started
+
+1. Contacts need to be imported first, with the external_identifier field containing the id that will be used in the import file to link attachments to contacts.
+1. Put the csv import file on the server somewhere. It's currently expected to have a header: Attachment ID,Body,Created Date,File Name,Parent ID,Parent.ID
+1. Put the attachment files to be imported on the server somewhere. They will be copied by the import into the correct Civi storage location.
+1. Either using Api4 Explorer, or the command line, run AttachmentImport.Import:
+    `cv --user=admin api4 AttachmentImport.Import importfile=/path/to/importfile.csv attachmentsfolder=/path/to/temporary/location/of/attachment/files`
+1. Optionally change the labels of the custom field group or fields as usual in the UI.
 
 ## Requirements
 
 * PHP v7.2+
-* CiviCRM (*FIXME: Version number*)
+* CiviCRM 5.36+
 
 ## Installation (Web UI)
 
@@ -30,11 +41,3 @@ install it with the command-line tool [cv](https://github.com/civicrm/cv).
 git clone https://github.com/FIXME/com.chabadsuite.attachmentimport.git
 cv en attachmentimport
 ```
-
-## Getting Started
-
-(* FIXME: Where would a new user navigate to get started? What changes would they see? *)
-
-## Known Issues
-
-(* FIXME *)
