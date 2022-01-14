@@ -1,9 +1,7 @@
 <?php
 
 require_once 'attachmentimport.civix.php';
-// phpcs:disable
 use CRM_Attachmentimport_ExtensionUtil as E;
-// phpcs:enable
 
 /**
  * Implements hook_civicrm_config().
@@ -30,31 +28,7 @@ function attachmentimport_civicrm_xmlMenu(&$files) {
  */
 function attachmentimport_civicrm_install() {
   _attachmentimport_civix_civicrm_install();
-  {
-    "name": "fileses",
-    "title": "fileses",
-    "extends": "Contact",
-    "style": "Tab with table",
-    "is_multiple": true,
-    "min_multiple": null,
-    "max_multiple": null,
-  }
-
-  {
-"name": "thefile",
-    "custom_group_id": 13,
-    "name": "thefile",
-    "label": "thefile",
-    "data_type": "File",
-    "html_type": "File",
-  },
-  {
-    "custom_group_id": 13,
-    "name": "File_Description",
-    "label": "File Description",
-    "data_type": "String",
-    "html_type": "Text",
-  }
+  _attachmentimport_create_custom_fields();
 }
 
 /**
@@ -72,6 +46,7 @@ function attachmentimport_civicrm_postInstall() {
  * @link https://docs.civicrm.org/dev/en/latest/hooks/hook_civicrm_uninstall
  */
 function attachmentimport_civicrm_uninstall() {
+  _attachmentimport_delete_custom_fields();
   _attachmentimport_civix_civicrm_uninstall();
 }
 
@@ -164,30 +139,64 @@ function attachmentimport_civicrm_themes(&$themes) {
   _attachmentimport_civix_civicrm_themes($themes);
 }
 
-// --- Functions below this ship commented out. Uncomment as required. ---
+function _attachmentimport_create_custom_fields() {
+  $custom_group = \Civi\Api4\CustomGroup::get(FALSE)
+    ->addWhere('name', '=', 'CS_Attachments')
+    ->addSelect('id')
+    ->execute()->first();
+  if (empty($custom_group['id'])) {
+    $custom_group = \Civi\Api4\CustomGroup::create(FALSE)
+      ->addValue('name', 'CS_Attachments')
+      ->addValue('title', E::ts('Attachments'))
+      ->addValue('extends', 'Contact')
+      ->addValue('style', 'Tab with table')
+      ->addValue('is_multiple', TRUE)
+      ->addValue('min_multiple', NULL)
+      ->addValue('max_multiple', NULL)
+      ->execute()->first();
+  }
+  if (!empty($custom_group['id'])) {
+    $custom_field = \Civi\Api4\CustomField::get(FALSE)
+      ->addWhere('name', '=', 'cs_attachment_file')
+      ->addSelect('id')
+      ->execute()->first();
+    if (empty($custom_field['id'])) {
+      \Civi\Api4\CustomField::create(FALSE)
+        ->addValue('custom_group_id', $custom_group['id'])
+        ->addValue('name', 'cs_attachment_file')
+        ->addValue('label', E::ts('Attachment'))
+        ->addValue('data_type', 'File')
+        ->addValue('html_type', 'File')
+        ->addValue('in_selector', TRUE)
+        ->addValue('weight', 1)
+        ->execute();
+    }
+    $custom_field = \Civi\Api4\CustomField::get(FALSE)
+      ->addWhere('name', '=', 'cs_attachment_description')
+      ->addSelect('id')
+      ->execute()->first();
+    if (empty($custom_field['id'])) {
+      \Civi\Api4\CustomField::create(FALSE)
+        ->addValue('custom_group_id', $custom_group['id'])
+        ->addValue('name', 'cs_attachment_description')
+        ->addValue('label', E::ts('Description'))
+        ->addValue('data_type', 'String')
+        ->addValue('html_type', 'Text')
+        ->addValue('in_selector', TRUE)
+        ->addValue('weight', 2)
+        ->execute();
+    }
+  }
+}
 
-/**
- * Implements hook_civicrm_preProcess().
- *
- * @link https://docs.civicrm.org/dev/en/latest/hooks/hook_civicrm_preProcess
- */
-//function attachmentimport_civicrm_preProcess($formName, &$form) {
-//
-//}
+function _attachmentimport_delete_custom_fields() {
+  // We don't really want to do this, since there's no reason to keep this
+  // extension installed after you've imported, so leave the custom fields.
 
-/**
- * Implements hook_civicrm_navigationMenu().
- *
- * @link https://docs.civicrm.org/dev/en/latest/hooks/hook_civicrm_navigationMenu
- */
-//function attachmentimport_civicrm_navigationMenu(&$menu) {
-//  _attachmentimport_civix_insert_navigation_menu($menu, 'Mailings', [
-//    'label' => E::ts('New subliminal message'),
-//    'name' => 'mailing_subliminal_message',
-//    'url' => 'civicrm/mailing/subliminal',
-//    'permission' => 'access CiviMail',
-//    'operator' => 'OR',
-//    'separator' => 0,
-//  ]);
-//  _attachmentimport_civix_navigationMenu($menu);
-//}
+  //\Civi\Api4\CustomField::delete(FALSE)
+  //  ->addWhere('custom_group_id:name', '=', 'CS_Attachments')
+  //  ->execute();
+  //\Civi\Api4\CustomGroup::delete(FALSE)
+  //  ->addWhere('name', '=', 'CS_Attachments')
+  //  ->execute();
+}

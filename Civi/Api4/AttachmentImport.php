@@ -1,9 +1,10 @@
 <?php
 namespace Civi\Api4;
 
-use \CRM_Attachmentimport_ExtensionUtil as E;
+use CRM_Attachmentimport_ExtensionUtil as E;
 
 class AttachmentImport extends Generic\AbstractEntity {
+
   public static function getFields($checkPermissions = TRUE) {
     return (new Generic\BasicGetFieldsAction(__CLASS__, __FUNCTION__, function($getFieldsAction) {
       return [
@@ -26,4 +27,5 @@ class AttachmentImport extends Generic\AbstractEntity {
       ];
     }))->setCheckPermissions($checkPermissions);
   }
+
 }
