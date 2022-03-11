@@ -30,30 +30,33 @@ class Import extends \Civi\Api4\Generic\AbstractAction {
     $newFolder = rtrim(\CRM_Core_Config::singleton()->customFileUploadDir, "/\\") . '/';
     $fp = fopen($this->importfile, 'r');
     $header = fgetcsv($fp);
-    // for now assume header looks like Attachment ID,Body,Created Date,File Name,Parent ID,Parent.ID
+    // for now assume header looks like Attachment ID,Body,File Name,Parent ID,Parent.ID
     while (($row = fgetcsv($fp)) !== FALSE) {
-      // Locate the contact based on external_identifier
+      // Locate the contact based on the custom field.
       $contact = \Civi\Api4\Contact::get()
         ->addSelect('id')
-        ->addWhere('external_identifier', '=', $row[4])
+        ->addWhere('Legacy_ID.Salesforce_Account_ID', '=', $row[3])
         ->execute()->first();
       if (empty($contact['id'])) {
-        \Civi::log()->error("Unable to find contact matching {$row[4]}.");
+        \Civi::log()->error("Unable to find contact matching {$row[3]}.");
         continue;
       }
 
-      $filename = $this->attachmentsfolder . $row[3];
+      // It's usually prefixed with the attachment ID, but sometimes not.
+      $filename = $this->attachmentsfolder . $row[0] . '_' . $row[2];
       if (!file_exists($filename)) {
-        \Civi::log()->error("File {$row[3]} not found.");
-        continue;
+        $filename = $this->attachmentsfolder . $row[2];
+        if (!file_exists($filename)) {
+          \Civi::log()->error("File {$filename} not found.");
+          continue;
+        }
       }
 
-      // Copy the file into civi storage folder
-      // Append a unique string - don't need to be cryptographically secure,
-      // just if two files have the same name.
-      $newFilename = $newFolder . $this->uniqifyFilename($row[3]);
+      // Copy the file into civi storage folder.
+      // We don't need to worry about uniqueness since salesforce handles that.
+      $newFilename = $newFolder . basename($filename);
       if (copy($filename, $newFilename) === FALSE) {
-        \Civi::log()->error("Unable to copy {$row[3]} to {$newFilename}.");
+        \Civi::log()->error("Unable to copy {$filename} to {$newFilename}.");
         continue;
       }
 
@@ -64,10 +67,10 @@ class Import extends \Civi\Api4\Generic\AbstractAction {
       $fileResult = \Civi\Api4\File::create()
         ->addValue('mime_type', $mime)
         ->addValue('uri', basename($newFilename))
-        ->addValue('description', $row[3])
+        ->addValue('description', $row[2])
         ->execute()->first();
       if (empty($fileResult['id'])) {
-        \Civi::log()->error("Unable to create file record for {$row[3]}.");
+        \Civi::log()->error("Unable to create file record for {$newFilename}.");
         continue;
       }
 
@@ -79,20 +82,6 @@ class Import extends \Civi\Api4\Generic\AbstractAction {
         ->execute();
     }
     fclose($fp);
-  }
-
-  /**
-   * e.g. myfile.docx => myfile_3287fd8d97.docx
-   *
-   * @param string $filename
-   * @return string
-   */
-  private function uniqifyFilename(string $filename): string {
-    $pos = strrpos($filename, '.');
-    if ($pos === FALSE) {
-      return $filename;
-    }
-    return substr($filename, 0, $pos) . '_' . uniqid('', TRUE) . substr($filename, $pos);
   }
 
 }

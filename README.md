@@ -6,12 +6,14 @@ The extension is licensed under [AGPL-3.0](LICENSE.txt).
 
 ## Getting Started
 
-1. Contacts need to be imported first, with the external_identifier field containing the id that will be used in the import file to link attachments to contacts.
-1. Put the csv import file on the server somewhere. It's currently expected to have a header: Attachment ID,Body,Created Date,File Name,Parent ID,Parent.ID
+1. Contacts need to be imported first, with the Salesforce Account ID field containing the id that will be used in the import file to link attachments to contacts.
+1. Put the csv import file on the server somewhere. It's currently expected to have a header: Attachment ID,Body,File Name,Parent ID,Parent.ID
 1. Put the attachment files to be imported on the server somewhere. They will be copied by the import into the correct Civi storage location.
 1. Either using Api4 Explorer, or the command line, run AttachmentImport.Import:
     `cv --user=admin api4 AttachmentImport.Import importfile=/path/to/importfile.csv attachmentsfolder=/path/to/temporary/location/of/attachment/files`
 1. Optionally change the labels of the custom field group or fields as usual in the UI.
+
+Note: Unlike most extensions where uninstalling will delete its custom fields, this extension will leave the fields when uninstalled, since there's not really any point keeping this extension installed once the import is complete.
 
 ## Requirements
 
